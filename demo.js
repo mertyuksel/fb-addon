@@ -1,73 +1,80 @@
-const TOKEN = 'EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU'
 
-const COMPLETE_URL = 'https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:"action_type",operator:"IN",value:[\'mobile_app_install\']}]&limit=1000'
+
+// complete spreadsheet URL 
+const SPREADSHEET_URL = 'SPREADSHEET_URL'
+
+// spreadsheet tab name (like Sheet1)
+const TAB_NAME = 'TAB_NAME'
+
+// put your complete URL you've already prepared 
+const COMPLETE_URL = ''
+
+// user access token from the facebook app you've created
+const TOKEN = 'TOKEN'
+
+
+
+function getFacebookAdsData() {
+ 
+  const completeURL = encodeURI(COMPLETE_URL); // neden burada encoding yaparken asagidakilerde yapmadin 
+  
+  // make async request and get report_run_id as a response 
+  const options = {'method' : 'post'};
+  const response = UrlFetchApp.fetch(completeURL, options);  
+  const responseObj = JSON.parse(response.getContentText());
+  
+  const REPORT_ID = responseObj.report_run_id;
+
+  // open and clear the sheet
+  const spreadSheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = spreadSheet.getSheetByName(TAB_NAME);
+  sheet.clear();
+  
+  // Control if async is done or not. 
+  const url = `https://graph.facebook.com/v10.0/${REPORT_ID}?access_token=${TOKEN}`;
+  var checkAsync = UrlFetchApp.fetch(url);
+  var response = JSON.parse(checkAsync.getContentText());
+
+  while (response.async_status != "Job Completed")
+  {
+    Logger.log(response.async_status)
+    Utilities.sleep(2000);
+    checkAsync = UrlFetchApp.fetch(url);
+    response = JSON.parse(fetchRequest.getContentText());
+  }
+
+  // data is ready 
+  const insightURL = `https://graph.facebook.com/v10.0/${REPORT_ID}/insights?access_token=${TOKEN}&export_format=csv`;
+  adsRawData = UrlFetchApp.fetch(insightURL);
+
+  var adsData = Utilities.parseCsv(adsRawData);  
+  sheet.getRange(1, 1, adsData.length, adsData[0].length).setValues(adsData);
+
+  Logger.log(results.async_status)
+}
+
+
+/*
 
 const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1c7lU83nFRCi6GbSZGWR1nTARlzV3KLvW4-lW7UNJ2hM/edit#gid=0'
 
 const TAB_NAME = 'Sheet1'
 
+const TOKEN = 'EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU'
 
-// **** DO NOT MODIFY ANTHING BELOW **** 
+const COMPLETE_URL = 'https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:"action_type",operator:"IN",value:[\'mobile_app_install\']}]&limit=1000'
 
 var REPORT_ID; 
 
-function requestFacebookReport() {
- 
-  const encodedFacebookUrl = encodeURI(COMPLETE_URL);
-  
-  const options = {'method' : 'post'};
-  const fetchRequest = UrlFetchApp.fetch(encodedFacebookUrl, options);  
-  const results = JSON.parse(fetchRequest.getContentText());
-  
-  REPORT_ID = results.report_run_id;
-}
 
+// user access token from the facebook app you've created
+const TOKEN = 'TOKEN'
 
-function getFacebookReport() {
-  
-  // Selects the chosen sheet and tab
-  const spreadSheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  const sheet = spreadSheet.getSheetByName(TAB_NAME);
-  
-  // Clears the sheet
-  sheet.clear();
-  
-  // Control if async is done or not. 
-  const url = `https://graph.facebook.com/v10.0/${REPORT_ID}?access_token=${TOKEN}`;
-  var fetchRequest = UrlFetchApp.fetch(url);
-  var results = JSON.parse(fetchRequest.getContentText());
+// facebook ad account ID 
+const ACCOUNT_ID = 'ACCOUNT_ID'
 
-  while (results.async_status != "Job Completed")
-  {
-    Logger.log(results.async_status)
-    Utilities.sleep(2000);
-    fetchRequest = UrlFetchApp.fetch(url);
-    results = JSON.parse(fetchRequest.getContentText());
-  }
+*/
 
-  const insightURL = `https://graph.facebook.com/v10.0/${REPORT_ID}/insights?access_token=${TOKEN}&export_format=csv`;
-  fetchRequest = UrlFetchApp.fetch(insightURL);
-
-  //const results1 = JSON.parse(literal);
-
-  //const results1 = Utilities.parseCsv(literal);
-  //sheet.getRange(1,1, results1.getLength(), results1[0].length).setValues(results1);
-  
-
-  var csvData = Utilities.parseCsv(fetchRequest);  // Exception: Could not parse text. Hatasi aliyorum. 
-  sheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
-
-  // TODO: buraya json to sheet yapilcak  
-  Logger.log(results.async_status)
-}
-
-
-
-
-function runApp() {
-  requestFacebookReport();
-  getFacebookReport();
-}
 
 
 /*
