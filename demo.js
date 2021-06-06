@@ -1,54 +1,66 @@
 
+const SPREADSHEET_URL = ''
 
-// complete spreadsheet URL 
-const SPREADSHEET_URL = 'SPREADSHEET_URL'
+const TAB_NAME = ''
 
-// spreadsheet tab name (like Sheet1)
-const TAB_NAME = 'TAB_NAME'
+const ACCOUNT_ID = ''
 
-// put your complete URL you've already prepared 
-const COMPLETE_URL = ''
+const TOKEN = ''
 
-// user access token from the facebook app you've created
-const TOKEN = 'TOKEN'
+const LEVEL = ''
 
+const FIELDS = ''
 
+const DATE_PRESET = ''
+
+const TIME_INCREMENT = ''
+
+const FILTERING = ''  
+
+// TODO: encoding islemine ihtiyac duyuyor. birde encode etmeden dene bakalim encodeURI kullanmadan.
+// filtering kismi kesinlkle encoding ihtiyac duyuyor parantez ve tirnak isareti kisimlari gibi. 
+// eger yapmaz isen UrlFetch calismiyor. invalid argument oluyor. 
+
+// TODO: parametrenin value kismi eksik oldugunda ne olur. teklide bu yasaniyor.  TEST ET. 
 
 function getFacebookAdsData() {
- 
-  const completeURL = encodeURI(COMPLETE_URL); // neden burada encoding yaparken asagidakilerde yapmadin 
-  
-  // make async request and get report_run_id as a response 
-  const options = {'method' : 'post'};
-  const response = UrlFetchApp.fetch(completeURL, options);  
-  const responseObj = JSON.parse(response.getContentText());
-  
-  const REPORT_ID = responseObj.report_run_id;
 
-  // open and clear the sheet
+  const baseUrl = `https://graph.facebook.com/v10.0/act_${ACCOUNT_ID}/insights?level=${LEVEL}&fields=${FIELDS}&date_preset=${DATE_PRESET}&access_token=${TOKEN}&time_increment=${TIME_INCREMENT}&filtering=${FILTERING}&limit=500`
+  
+  // filtering kismi icin gerekli. 
+  const encodedUrl = encodeURI(baseUrl);  
+  
+  // TODO: output incele gercekten encode ediyor mu nasil ediyor bak.
+  Logger.log(encodedUrl) 
+
+  var response = UrlFetchApp.fetch(encodedUrl, {'method' : 'post'});  
+  const data = JSON.parse(response.getContentText());
+  const REPORT_ID = data.report_run_id;
+
   const spreadSheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = spreadSheet.getSheetByName(TAB_NAME);
+  
   sheet.clear();
   
-  // Control if async is done or not. 
-  const url = `https://graph.facebook.com/v10.0/${REPORT_ID}?access_token=${TOKEN}`;
-  var checkAsync = UrlFetchApp.fetch(url);
-  var response = JSON.parse(checkAsync.getContentText());
+  // ENCODING GEREKSIZ DENEDIM. 
+  const checkUrl = `https://graph.facebook.com/v10.0/${REPORT_ID}?access_token=${TOKEN}`;
+  var checkAsync = UrlFetchApp.fetch(checkUrl);
+  var checkResponse = JSON.parse(checkAsync.getContentText());
 
-  while (response.async_status != "Job Completed")
+  while (checkResponse.async_status != "Job Completed")
   {
-    Logger.log(response.async_status)
+    Logger.log(checkResponseresponse.async_status)
     Utilities.sleep(2000);
     checkAsync = UrlFetchApp.fetch(url);
-    response = JSON.parse(fetchRequest.getContentText());
+    checkResponse = JSON.parse(checkAsync.getContentText());
   }
 
-  // data is ready 
-  const insightURL = `https://graph.facebook.com/v10.0/${REPORT_ID}/insights?access_token=${TOKEN}&export_format=csv`;
-  adsRawData = UrlFetchApp.fetch(insightURL);
+  // ENCODING GEREKSIZ DENEDIM. 
+  const insightUrl = `https://graph.facebook.com/v10.0/${REPORT_ID}/insights?access_token=${TOKEN}&export_format=csv`;
+  rawAdsData = UrlFetchApp.fetch(insightUrl);
 
-  var adsData = Utilities.parseCsv(adsRawData);  
-  sheet.getRange(1, 1, adsData.length, adsData[0].length).setValues(adsData);
+  var csvData = Utilities.parseCsv(rawAdsData);  
+  sheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
 
   Logger.log(results.async_status)
 }
@@ -62,16 +74,34 @@ const TAB_NAME = 'Sheet1'
 
 const TOKEN = 'EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU'
 
-const COMPLETE_URL = 'https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:"action_type",operator:"IN",value:[\'mobile_app_install\']}]&limit=1000'
+const COMPLETE_URL = 'https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:"action_type",operator:"IN",value:[\'mobile_app_install\']}]&limit=500'
+
+https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:%22action_type%22,operator:%22IN%22,value:[\%27mobile_app_install\%27]}]&limit=500
+
+
+
+
+
 
 var REPORT_ID; 
 
 
-// user access token from the facebook app you've created
-const TOKEN = 'TOKEN'
+// put your complete URL you've already prepared 
+const COMPLETE_URL = 'COMPLETE_URL'
+
+
+
+// complete spreadsheet URL 
+const SPREADSHEET_URL = 'SPREADSHEET_URL'
+
+// spreadsheet tab name (like Sheet1)
+const TAB_NAME = 'TAB_NAME'
 
 // facebook ad account ID 
 const ACCOUNT_ID = 'ACCOUNT_ID'
+
+// user access token from the facebook app you've created
+const TOKEN = 'TOKEN'
 
 */
 
@@ -101,5 +131,11 @@ https://graph.facebook.com/v10.0/1670232720033688?access_token=EAAExgau2As4BAKgf
 https://graph.facebook.com/v10.0/act_4653630351333052/insights?level=campaign&export_format=xls&fields=impressions&date_preset=yesterday&access_token=EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl58QmYNZA3TqR1JkQ25CzC7O7ZAYH5Dw8LJHpdiTkfRbZB3dNZCPasEVZCx4EWamIQt7aJUyWHGo6NMCsFyDNiK7AeqfODI5WZBd9L9O4sCZCmBRSPvAj0ATKxaU&time_increment=1&filtering=[{field:"action_type",operator:"IN",value:['mobile_app_install']}]&limit=1000
 
 */
+
+
+// parametrelerin sag tarafi bos olmali mert -- biri doldurmadan fetch yaptiginda hata vermesin diye. 
+
+// her parametre ayri sekilde olucak hepsinin detayli anlatimi websitesinde olucak merak etme burada link aciklama vs vermeyeceksin. 
+// degisken isimlerini degistirmeyi unutma. 
 
 
