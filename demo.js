@@ -1,10 +1,10 @@
-
 /******************** REQUIRED *******************/
+
 // required 
 const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1c7lU83nFRCi6GbSZGWR1nTARlzV3KLvW4-lW7UNJ2hM/edit#gid=0'   
 
 // required 
-const TAB_NAME = 'Sheet1'
+const SHEET_TAB_NAME = 'Sheet1'
 
 // required
 const ACCOUNT_ID = '4653630351333052'
@@ -14,6 +14,7 @@ const TOKEN = 'EAAExgau2As4BAKgfoPN84jbun6jUJM7Vd9cOvjyUbhj610ZB2H1ZCgrouYEcZBl5
 
 
 /******************** OPTIONAL *******************/
+
 // optional
 const LEVEL = ''
 
@@ -35,43 +36,41 @@ const BREAKDOWNS = ''
 
 function getFacebookAdsData() {
 
+  // DONE
   const baseUrl = `https://graph.facebook.com/v10.0/act_${ACCOUNT_ID}/insights?access_token=${TOKEN}&level=${LEVEL}&fields=${FIELDS}&date_preset=${DATE_PRESET}&time_increment=${TIME_INCREMENT}&filtering=${FILTERING}&breakdowns=${BREAKDOWNS}&limit=500`
-    const encodedUrl = encodeURI(baseUrl);  
+  const encodedUrl = encodeURI(baseUrl);  
 
+  // DONE
   var response = UrlFetchApp.fetch(encodedUrl, {'method' : 'post'});  
-  const data = JSON.parse(response.getContentText());
-  const REPORT_ID = data.report_run_id;
- 
+  const jsonResponse = JSON.parse(response.getContentText());
+  const REPORT_ID = jsonResponse.report_run_id;
+
+  // DONE
+  const spreadSheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = spreadSheet.getSheetByName(SHEET_TAB_NAME);
+  sheet.clear();
+
+  // DONE 
   const checkUrl = `https://graph.facebook.com/v10.0/${REPORT_ID}?access_token=${TOKEN}`;
   var checkAsync = UrlFetchApp.fetch(checkUrl);
   var checkResponse = JSON.parse(checkAsync.getContentText());
 
-  const spreadSheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  const sheet = spreadSheet.getSheetByName(TAB_NAME);
-  sheet.clear();
-
+  // DONE
   while (checkResponse.async_status != "Job Completed")
   {
-    Logger.log(checkResponse.async_status)
     Utilities.sleep(2000);
     checkAsync = UrlFetchApp.fetch(checkUrl);
     checkResponse = JSON.parse(checkAsync.getContentText());
   }
-
-  const reportUrl = `https://www.facebook.com/ads/ads_insights/export_report?report_run_id=${REPORT_ID}&format=csv&access_token=${TOKEN}`;
+  // DONE
+  const reportUrl = `https://www.facebook.com/ads/ads_insights/export_report?report_run_id=${REPORT_ID}&access_token=${TOKEN}&format=csv`;
   const csv = UrlFetchApp.fetch(reportUrl);  
   const csvData  = Utilities.parseCsv(csv);
   
-
-  csvData.length // 2
- 
-
-  Logger.log(csvData); // 	[[], [No data available.]]
-
-
-  // csvData.length = 2 CIKIYOR. 
+  //DONE
   sheet.getRange(1,1, csvData.length, csvData[0].length).setValues(csvData);
-
-  Logger.log(checkResponse.async_status)
 }
 
+
+
+// Insanlara sheet will be cleared uyarisi vericeksin unutma. verileirni kaybetmesin insanlar. 
